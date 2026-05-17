@@ -14,6 +14,8 @@ export default function RootLayout() {
     >
       <Stack.Screen name="index" options={{ title: 'Awaab', headerShown: false }} />
       <Stack.Screen name="(session)/after-salah" options={{ title: 'After Salah' }} />
+      <Stack.Screen name="(session)/morning" options={{ title: 'Morning Adhkar' }} />
+      <Stack.Screen name="(session)/evening" options={{ title: 'Evening Adhkar' }} />
     </Stack>
   );
 }

@@ -26,14 +26,14 @@ const SESSIONS: SessionCard[] = [
     label: 'Morning Adhkar',
     arabic: 'أذكار الصباح',
     route: '/(session)/morning',
-    comingSoon: true,
+    comingSoon: false,
   },
   {
     key: 'evening',
     label: 'Evening Adhkar',
     arabic: 'أذكار المساء',
     route: '/(session)/evening',
-    comingSoon: true,
+    comingSoon: false,
   },
 ];
 

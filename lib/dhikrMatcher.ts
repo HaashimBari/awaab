@@ -1,12 +1,11 @@
 import type { DhikrId } from '../constants/dhikr';
 
-const PATTERNS: Record<DhikrId, RegExp[]> = {
+// Only tasbih dhikr are matched via voice input — recite steps use DhikrRecorder instead
+const PATTERNS: Partial<Record<DhikrId, RegExp[]>> = {
   subhanallah: [
     /subhan\s*all?ah/i,
-    /subhan\s*allah/i,
     /سبحان\s*الله/,
     /subhanallah/i,
-    /subhan allah/i,
   ],
   alhamdulillah: [
     /alhamdu\s*lill?ah/i,
@@ -23,14 +22,10 @@ const PATTERNS: Record<DhikrId, RegExp[]> = {
     /allah akber/i,
     /allaho\s*akbar/i,
   ],
-  'la-ilaha-complete': [
-    /la\s*ilaha\s*ill?all?ah/i,
-    /لا\s*إله\s*إلا\s*الله/,
-  ],
-  'ayatul-kursi': [
-    /allahu\s*la\s*ilaha\s*illa\s*huw/i,
-    /ayatul?\s*kursi/i,
-    /آية\s*الكرسي/,
+  'istighfar-evening': [
+    /astaghfirullah/i,
+    /astagh\s*firullah/i,
+    /أستغفر\s*الله/,
   ],
 };
 

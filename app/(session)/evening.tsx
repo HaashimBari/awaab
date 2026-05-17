@@ -1,24 +1,24 @@
 import { Stack } from 'expo-router';
 import React from 'react';
 import { SessionFlow } from '../../components/session/SessionFlow';
-import { AFTER_SALAH_DHIKR } from '../../constants/dhikr';
+import { EVENING_DHIKR } from '../../constants/dhikr';
 import { Colors } from '../../constants/theme';
 
-export default function AfterSalahScreen() {
+export default function EveningScreen() {
   return (
     <>
       <Stack.Screen
         options={{
-          title: 'After Salah',
+          title: 'Evening Adhkar',
           headerStyle: { backgroundColor: Colors.background },
           headerTintColor: Colors.text,
           headerShadowVisible: false,
         }}
       />
       <SessionFlow
-        dhikrList={AFTER_SALAH_DHIKR}
-        category="after-salah"
-        title="After Salah"
+        dhikrList={EVENING_DHIKR}
+        category="evening"
+        title="Evening Adhkar"
       />
     </>
   );
