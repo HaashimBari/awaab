@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface SessionRecord {
   id: string;
-  date: string;        // ISO date string
+  date: string;        // YYYY-MM-DD
   category: string;
   completedAt: string; // ISO datetime
   durationMs: number;
@@ -11,7 +11,7 @@ export interface SessionRecord {
 
 const SESSIONS_KEY = '@awaab/sessions';
 
-export async function saveSesssion(session: SessionRecord): Promise<void> {
+export async function saveSession(session: SessionRecord): Promise<void> {
   const existing = await getSessions();
   existing.unshift(session);
   await AsyncStorage.setItem(SESSIONS_KEY, JSON.stringify(existing));

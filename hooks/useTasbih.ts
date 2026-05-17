@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { AFTER_SALAH_DHIKR, type DhikrId } from '../constants/dhikr';
-import { saveSesssion } from '../lib/storage';
+import { saveSession } from '../lib/storage';
 
 type Counts = Record<DhikrId, number>;
 
@@ -27,7 +27,7 @@ export function useTasbih() {
       if (allDone) {
         setIsComplete(true);
         const now = Date.now();
-        saveSesssion({
+        saveSession({
           id: String(now),
           date: new Date().toISOString().slice(0, 10),
           category: 'after-salah',

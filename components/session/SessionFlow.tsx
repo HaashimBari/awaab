@@ -8,7 +8,7 @@ import { VoiceButton } from '../dhikr/VoiceButton';
 import { useVoiceRecognition } from '../../hooks/useVoiceRecognition';
 import type { DhikrId } from '../../constants/dhikr';
 import { SessionComplete } from './SessionComplete';
-import { saveSesssion } from '../../lib/storage';
+import { saveSession } from '../../lib/storage';
 
 interface Props {
   dhikrList: DhikrItem[];
@@ -51,7 +51,7 @@ export function SessionFlow({ dhikrList, category, title }: Props) {
     if (stepIndex + 1 >= steps.length) {
       setIsComplete(true);
       const now = Date.now();
-      saveSesssion({
+      saveSession({
         id: String(now),
         date: new Date().toISOString().slice(0, 10),
         category,

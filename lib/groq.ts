@@ -1,5 +1,6 @@
 import Constants from 'expo-constants';
 import type { DhikrItem } from '../constants/dhikr';
+import type { CategoryStats, StreakInfo } from './progressEngine';
 
 const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
 const MODEL = 'llama-3.3-70b-versatile';
@@ -63,5 +64,60 @@ Respond with ONLY valid JSON in this exact format, nothing else:
     };
   } catch {
     return { score: 50, feedback: 'Keep practising — you are doing great!' };
+  }
+}
+
+export interface ReadinessResult {
+  ready: boolean;
+  reason: string;
+}
+
+export async function evaluateReadiness(
+  categoryStats: CategoryStats,
+  streak: StreakInfo,
+  avgScore: number,
+): Promise<ReadinessResult> {
+  const apiKey = Constants.expoConfig?.extra?.groqApiKey as string | undefined;
+  if (!apiKey) return { ready: false, reason: 'API key not configured' };
+
+  const prompt = `You are an Islamic learning coach evaluating whether a student is ready to add more dhikr to their daily routine.
+
+Category: ${categoryStats.category}
+Total sessions completed: ${categoryStats.totalSessions}
+Current streak: ${streak.current} days
+Longest streak: ${streak.longest} days
+Average pronunciation score: ${avgScore}/100
+
+Decide if this student is ready to progress. They should be ready if:
+- They have completed at least 7 sessions in this category, AND
+- Their current streak is at least 3 days, AND
+- Their average pronunciation score is at least 65
+
+Respond with ONLY valid JSON: {"ready": true/false, "reason": "<one encouraging sentence explaining the decision>"}`;
+
+  const response = await fetch(GROQ_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.2,
+      max_tokens: 80,
+    }),
+  });
+
+  if (!response.ok) return { ready: false, reason: 'Could not evaluate readiness' };
+
+  const data = await response.json() as {
+    choices: { message: { content: string } }[];
+  };
+  const content = data.choices[0]?.message?.content ?? '';
+  try {
+    return JSON.parse(content) as ReadinessResult;
+  } catch {
+    return { ready: false, reason: 'Keep building the habit — you are on the right track!' };
   }
 }

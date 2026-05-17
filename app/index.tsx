@@ -2,55 +2,44 @@ import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StreakBanner } from '../components/home/StreakBanner';
 import { Colors, FontSize, Radius, Spacing } from '../constants/theme';
-import { getTodaySessions } from '../lib/storage';
+import { calculateStreak, type StreakInfo } from '../lib/progressEngine';
+import { getSessions, getTodaySessions } from '../lib/storage';
 
 interface SessionCard {
   key: string;
   label: string;
   arabic: string;
   route: string;
-  comingSoon: boolean;
 }
 
 const SESSIONS: SessionCard[] = [
-  {
-    key: 'after-salah',
-    label: 'After Salah',
-    arabic: 'أذكار بعد الصلاة',
-    route: '/(session)/after-salah',
-    comingSoon: false,
-  },
-  {
-    key: 'morning',
-    label: 'Morning Adhkar',
-    arabic: 'أذكار الصباح',
-    route: '/(session)/morning',
-    comingSoon: false,
-  },
-  {
-    key: 'evening',
-    label: 'Evening Adhkar',
-    arabic: 'أذكار المساء',
-    route: '/(session)/evening',
-    comingSoon: false,
-  },
+  { key: 'after-salah', label: 'After Salah',     arabic: 'أذكار بعد الصلاة', route: '/(session)/after-salah' },
+  { key: 'morning',     label: 'Morning Adhkar',  arabic: 'أذكار الصباح',     route: '/(session)/morning'    },
+  { key: 'evening',     label: 'Evening Adhkar',  arabic: 'أذكار المساء',     route: '/(session)/evening'    },
 ];
 
 export default function HomeScreen() {
   const [completed, setCompleted] = useState<Record<string, boolean>>({});
+  const [streak, setStreak] = useState<StreakInfo>({ current: 0, longest: 0 });
 
   useEffect(() => {
-    async function loadToday() {
+    async function load() {
       const results: Record<string, boolean> = {};
       for (const s of SESSIONS) {
         const sessions = await getTodaySessions(s.key);
         results[s.key] = sessions.length > 0;
       }
       setCompleted(results);
+
+      const all = await getSessions();
+      setStreak(calculateStreak(all));
     }
-    loadToday();
+    load();
   }, []);
+
+  const todayCount = Object.values(completed).filter(Boolean).length;
 
   return (
     <View style={styles.container}>
@@ -63,30 +52,26 @@ export default function HomeScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+
+        <StreakBanner streak={streak} todayCount={todayCount} />
+
         <Text style={styles.sectionLabel}>TODAY'S SESSIONS</Text>
 
         {SESSIONS.map((session) => (
           <Pressable
             key={session.key}
-            style={[styles.card, session.comingSoon && styles.cardDisabled]}
-            onPress={() => !session.comingSoon && router.push(session.route as never)}
-            disabled={session.comingSoon}
+            style={styles.card}
+            onPress={() => router.push(session.route as never)}
           >
             <View style={styles.cardLeft}>
               <Text style={styles.cardArabic}>{session.arabic}</Text>
               <Text style={styles.cardLabel}>{session.label}</Text>
-              {session.comingSoon && (
-                <Text style={styles.comingSoon}>Coming soon</Text>
-              )}
             </View>
-
             <View style={styles.cardRight}>
               {completed[session.key] ? (
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>✓ Done</Text>
                 </View>
-              ) : session.comingSoon ? (
-                <Text style={styles.lockIcon}>🔒</Text>
               ) : (
                 <Text style={styles.arrow}>›</Text>
               )}
@@ -94,19 +79,11 @@ export default function HomeScreen() {
           </Pressable>
         ))}
 
-        <Text style={styles.sectionLabel} >PROGRESS</Text>
-        <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <Text style={styles.statNum}>
-              {Object.values(completed).filter(Boolean).length}
-            </Text>
-            <Text style={styles.statLabel}>Done today</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNum}>{SESSIONS.filter((s) => !s.comingSoon).length}</Text>
-            <Text style={styles.statLabel}>Available</Text>
-          </View>
-        </View>
+        <Pressable style={styles.progressLink} onPress={() => router.push('/progress')}>
+          <Text style={styles.progressLinkText}>📊  View Progress & Streaks</Text>
+          <Text style={styles.arrow}>›</Text>
+        </Pressable>
+
       </ScrollView>
     </View>
   );
@@ -149,8 +126,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.textMuted,
     letterSpacing: 1.5,
-    marginTop: Spacing.md,
-    marginBottom: Spacing.xs,
+    marginTop: Spacing.sm,
     marginLeft: Spacing.xs,
   },
   card: {
@@ -162,13 +138,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  cardDisabled: {
-    opacity: 0.5,
-  },
   cardLeft: { flex: 1, gap: Spacing.xs },
   cardArabic: { fontSize: 20, color: Colors.text, fontWeight: '500' },
   cardLabel: { fontSize: FontSize.label, color: Colors.textSecondary },
-  comingSoon: { fontSize: FontSize.small, color: Colors.textMuted },
   cardRight: { alignItems: 'center', justifyContent: 'center', marginLeft: Spacing.md },
   badge: {
     backgroundColor: Colors.successDim,
@@ -177,19 +149,21 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xs,
   },
   badgeText: { color: Colors.success, fontSize: FontSize.small, fontWeight: '600' },
-  lockIcon: { fontSize: 20 },
   arrow: { fontSize: 24, color: Colors.primary, fontWeight: '300' },
-  statsRow: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.xs },
-  statCard: {
-    flex: 1,
+  progressLink: {
     backgroundColor: Colors.surface,
     borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: Colors.border,
     padding: Spacing.md,
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.xs,
+    justifyContent: 'space-between',
+    marginTop: Spacing.sm,
   },
-  statNum: { fontSize: 32, fontWeight: '700', color: Colors.primary },
-  statLabel: { fontSize: FontSize.small, color: Colors.textSecondary },
+  progressLinkText: {
+    fontSize: FontSize.body,
+    color: Colors.textSecondary,
+    fontWeight: '500',
+  },
 });
